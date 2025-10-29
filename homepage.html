@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CC GLOBAL | Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{--primary:#2563eb;--success:#16a34a;--danger:#ef4444;--bg:#f6f9fb;--card:#fff;--text:#0f172a;--muted:#64748b;--border:#e6edf4}
+:root.dark{--primary:#3b82f6;--success:#34d399;--danger:#ef4444;--bg:#071026;--card:#0b1220;--text:#e6eef8;--muted:#9bb0cf;--border:#122037}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:var(--text);transition:background .28s,color .28s;height:100vh}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:260px;min-width:260px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:12px;transition:width .28s}
+.sidebar.collapsed{width:72px;min-width:72px}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(180deg,var(--primary),#1e40af);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+.title{font-weight:700;color:var(--primary)}
+.nav{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.nav button{display:flex;align-items:center;gap:12px;background:none;border:0;padding:10px;border-radius:8px;cursor:pointer;color:var(--text);font-weight:700}
+.nav button:hover{background:rgba(37,99,235,0.06)}
+.nav .icon{width:28px;text-align:center}
+.nav .label{transition:opacity .18s}
+.sidebar.collapsed .label{opacity:0;pointer-events:none}
+.sidebar-footer{margin-top:auto;display:flex;justify-content:center;padding:8px}
+.content-wrap{flex:1;margin-left:260px;transition:margin-left .28s;height:100vh;display:flex;flex-direction:column}
+.sidebar.collapsed ~ .content-wrap{margin-left:72px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.left{display:flex;align-items:center;gap:12px}
+.hamburger{width:44px;height:44px;border-radius:8px;border:0;background:none;cursor:pointer;font-size:18px}
+.welcome{font-size:18px;font-weight:700}
+.right{display:flex;align-items:center;gap:8px}
+.main{padding:18px;overflow:auto;flex:1}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;box-shadow:0 8px 28px rgba(2,6,23,0.04)}
+.card h4{margin:0;font-size:.9rem;color:var(--muted)}
+.card p{margin:8px 0 0 0;font-size:1.4rem;font-weight:800;color:var(--text)}
+.activity-card{background:var(--card);border:1px solid var(--border);padding:12px;border-radius:12px;box-shadow:0 10px 30px rgba(2,6,23,0.04)}
+#activityList{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto;padding-right:6px}
+.activity-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;border-radius:10px;background:var(--bg);border:1px solid var(--border);opacity:0;transform:translateY(-6px)}
+.activity-row.show{animation:activityIn .36s ease forwards}
+@keyframes activityIn{to{opacity:1;transform:none}}
+.activity-left{display:flex;gap:10px;align-items:center}
+.activity-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;flex-shrink:0}
+.tag{font-weight:700;font-size:12px;padding:4px 8px;border-radius:999px;color:white}
+.table-wrap{margin-top:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:auto;padding:6px}
+.table{width:100%;border-collapse:collapse;min-width:700px}
+.table th,.table td{padding:10px;text-align:left;border-bottom:1px solid var(--border)}
+.table thead th{background:transparent;color:var(--muted)}
+.modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.36);z-index:60}
+.modal-backdrop.show{display:flex}
+.modal-panel{width:92%;max-width:520px;background:var(--card);color:var(--text);border-radius:12px;padding:18px;border:1px solid var(--border);box-shadow:0 30px 60px rgba(2,6,23,0.12)}
+.modal-panel h3{margin:0 0 10px 0}
+.form-row{display:flex;gap:8px;margin-bottom:8px}
+.form-row input,.form-row select{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text)}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.btn{padding:8px 12px;border-radius:8px;border:0;cursor:pointer;font-weight:700}
+.btn.save{background:var(--primary);color:white}
+.btn.cancel{background:var(--border);color:var(--text)}
+#toastContainer{position:fixed;top:14px;right:14px;z-index:80;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{pointer-events:auto;display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;background:var(--card);border-left:4px solid var(--primary);box-shadow:0 10px 30px rgba(2,6,23,0.08);animation:toastIn .3s ease,toastOut .5s ease 3.6s forwards}
+.toast.success{border-left-color:var(--success)}.toast.error{border-left-color:var(--danger)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}@keyframes toastOut{to{opacity:0;transform:translateY(-6px)}}
+@media (max-width:1024px){.sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.content-wrap{margin-left:0}}
+</style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar" aria-label="Main sidebar">
+      <div class="brand">
+        <div class="logo">CC</div>
+        <div class="title">CC GLOBAL</div>
+      </div>
+
+      <nav class="nav" role="navigation" aria-label="Main">
+        <button class="nav-btn" data-section="dashboard" title="Dashboard"><span class="icon">🏠</span><span class="label">Dashboard</span></button>
+        <button class="nav-btn" data-section="members" title="Members"><span class="icon">👥</span><span class="label">Members</span></button>
+        <button class="nav-btn" data-section="payments" title="Payments"><span class="icon">💳</span><span class="label">Payments</span></button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="logoutBtn" class="btn" style="background:transparent;color:var(--danger);font-weight:800">🚪 Logout</button>
+      </div>
+    </aside>
+
+    <div class="content-wrap">
+      <div class="topbar">
+        <div class="left">
+          <button id="hamburger" class="hamburger">☰</button>
+          <div class="welcome" id="welcomeText">Welcome</div>
+        </div>
+        <div class="right">
+          <div id="timeDisplay" style="color:var(--muted);font-size:13px"></div>
+          <button id="themeToggle" class="btn" style="background:var(--primary);color:#fff">🌓</button>
+        </div>
+      </div>
+
+      <main class="main">
+        <!-- dashboard -->
+        <section id="dashboard">
+          <div class="cards">
+            <div class="card"><h4>Total Members</h4><p id="totalMembers">0</p></div>
+            <div class="card"><h4>Total Payments</h4><p id="totalPayments">0</p></div>
+            <div class="card"><h4>Total Revenue</h4><p id="totalRevenue">GHS 0.00</p></div>
+          </div>
+
+          <div class="activity-card">
+            <h3>Recent Activity</h3>
+            <div id="activityList" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <!-- members -->
+        <section id="members" style="display:none;margin-top:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <h3>Members</h3>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="memberSearch" placeholder="Search members..." style="padding:8px;border-radius:8px;border:1px solid var(--border)" />
+              <button id="addMemberBtn" class="btn save">+ Add Member</button>
+              <button id="exportMembersBtn" class="btn" style="background:var(--success)">Export CSV</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="table" id="memberTable">
+              <thead><tr><th>Name</th><th>DOB</th><th>Phone</th><th>Email</th><th>Location</th><th>Actions</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- payments -->
+        <section id="payments" style="display:none;margin-top:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <h3>Payments</h3>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="paymentSearch" placeholder="Search payments..." style="padding:8px;border-radius:8px;border:1px solid var(--border)" />
+              <button id="addPaymentBtn" class="btn save" style="background:var(--success)">+ Make Payment</button>
+              <button id="exportPaymentsBtn" class="btn" style="background:var(--primary)">Export CSV</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="table" id="paymentTable">
+              <thead><tr><th>Amount</th><th>Currency</th><th>Type</th><th>Mode</th><th>Reference</th><th>Actions</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Member Modal -->
+  <div id="memberModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-panel">
+      <h3>Add / Edit Member</h3>
+      <input type="hidden" id="memberEditIndex" />
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <input id="memberName" placeholder="Full name" />
+        <input id="memberDOB" type="date" />
+        <input id="memberPhone" placeholder="Phone number" />
+        <input id="memberEmail" placeholder="Email" />
+        <input id="memberLocation" placeholder="Location" />
+        <input id="memberPayment" placeholder="Payment amount (optional)" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn cancel" id="memberCancel">Cancel</button>
+        <button class="btn save" id="memberSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div id="paymentModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-panel">
+      <h3>Add / Edit Payment</h3>
+      <input type="hidden" id="paymentEditIndex" />
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <input id="paymentAmount" type="number" placeholder="Amount" />
+        <select id="paymentCurrency"><option>GHS</option><option>USD</option><option>EUR</option><option>GBP</option></select>
+        <select id="paymentType"><option>Momo</option><option>Card</option><option>Bank</option></select>
+        <select id="paymentMode"><option>Cash</option><option>Transfer</option></select>
+        <input id="paymentRef" placeholder="Reference / Description" />
+        <input id="paymentNote" placeholder="Note (optional)" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn cancel" id="paymentCancel">Cancel</button>
+        <button class="btn save" id="paymentSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toastContainer"></div>
+
+<script>
+/* ========== Common helpers ========== */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from((r||document).querySelectorAll(s));
+const saveJSON = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+const loadJSON = (k) => { try{ return JSON.parse(localStorage.getItem(k) || 'null') || []; } catch(e){ return []; } };
+
+/* ========== Auth check: only allow logged-in users ========== */
+(function checkAuth(){
+  const user = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+  if(!user){
+    // not logged in -> go to login
+    window.location.href = 'login.html';
+  }
+})();
+
+/* ========== State loaded from localStorage ========== */
+let members = loadJSON('members');
+let payments = loadJSON('payments');
+let activities = loadJSON('activities');
+
+/* ========== Elements ========== */
+const sidebar = $('#sidebar');
+const collapseBtn = $('#collapseBtn'); // not present here separately, using nav toggle
+const hamburger = $('#hamburger');
+const overlay = $('#overlay');
+const themeToggle = $('#themeToggle');
+const welcomeText = $('#welcomeText');
+const timeDisplay = $('#timeDisplay');
+
+const navButtons = $$('.nav button');
+const sectionDashboard = $('#dashboard');
+const sectionMembers = $('#members');
+const sectionPayments = $('#payments');
+
+const totalMembersEl = $('#totalMembers');
+const totalPaymentsEl = $('#totalPayments');
+const totalRevenueEl = $('#totalRevenue');
+
+const activityList = $('#activityList');
+const toastContainer = $('#toastContainer');
+
+/* tables */
+const memberTableBody = $('#memberTable tbody');
+const paymentTableBody = $('#paymentTable tbody');
+const memberSearch = $('#memberSearch');
+const paymentSearch = $('#paymentSearch');
+
+/* modals */
+const memberModal = $('#memberModal');
+const paymentModal = $('#paymentModal');
+
+/* member fields */
+const memberEditIndex = $('#memberEditIndex');
+const memberName = $('#memberName');
+const memberDOB = $('#memberDOB');
+const memberPhone = $('#memberPhone');
+const memberEmail = $('#memberEmail');
+const memberLocation = $('#memberLocation');
+const memberPayment = $('#memberPayment');
+const memberSave = $('#memberSave');
+const memberCancel = $('#memberCancel');
+const addMemberBtn = $('#addMemberBtn');
+const exportMembersBtn = $('#exportMembersBtn');
+
+/* payment fields */
+const paymentEditIndex = $('#paymentEditIndex');
+const paymentAmount = $('#paymentAmount');
+const paymentCurrency = $('#paymentCurrency');
+const paymentType = $('#paymentType');
+const paymentMode = $('#paymentMode');
+const paymentRef = $('#paymentRef');
+const paymentNote = $('#paymentNote');
+const paymentSave = $('#paymentSave');
+const paymentCancel = $('#paymentCancel');
+const addPaymentBtn = $('#addPaymentBtn');
+const exportPaymentsBtn = $('#exportPaymentsBtn');
+
+/* logout */
+const logoutBtn = $('#logoutBtn');
+
+/* ========== Utility: Toast (supports confirm actions inside toast) ========== */
+function showToast(message, type='success', actions){
+  // actions: [{ label:'Confirm', positive:true, onClick:fn }, ...]
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type==='error' ? 'error' : 'success');
+  el.style.pointerEvents = 'auto';
+  const icon = type==='error' ? '❌' : (type==='info' ? 'ℹ️' : '✅');
+  el.innerHTML = `<div style="font-size:18px">${icon}</div><div style="min-width:180px">${message}</div>`;
+  if(actions && Array.isArray(actions)){
+    const wrapper = document.createElement('div');
+    wrapper.style.marginLeft = '8px';
+    actions.forEach(a=>{
+      const b = document.createElement('button');
+      b.textContent = a.label;
+      b.style.marginLeft = '6px';
+      b.className = 'btn';
+      b.style.background = a.positive ? 'var(--success)' : 'var(--danger)';
+      b.style.color = '#fff';
+      b.onclick = ()=>{
+        a.onClick(); el.remove();
+      };
+      wrapper.appendChild(b);
+    });
+    el.appendChild(wrapper);
+  }
+  toastContainer.appendChild(el);
+  if(!actions) setTimeout(()=> { el.style.opacity = '0'; setTimeout(()=> el.remove(),500); }, 3600);
+  return el;
+}
+
+/* ========== Theme init ========== */
+(function initTheme(){
+  if(localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+})();
+themeToggle.addEventListener('click', ()=>{
+  const dark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('theme', dark ? 'dark' : 'light');
+});
+
+/* ========== Time display ========== */
+function updateTime(){ $('#timeDisplay').textContent = new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true}); }
+updateTime(); setInterval(updateTime,1000);
+
+/* ========== Sidebar behavior ========== */
+hamburger.addEventListener('click', ()=>{
+  if(window.innerWidth <= 1024){
+    sidebar.classList.toggle('open');
+    const ov = document.getElementById('overlay');
+    if(!ov){ const o = document.createElement('div'); o.id='overlay'; o.className='overlay'; document.body.appendChild(o); o.addEventListener('click', ()=> { sidebar.classList.remove('open'); o.remove(); }); }
+    else { ov.style.display = sidebar.classList.contains('open') ? 'block' : 'none'; }
+  } else {
+    sidebar.classList.toggle('collapsed');
+  }
+});
+
+/* ========== Navigation & sections ========== */
+navButtons.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    navButtons.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const sec = btn.getAttribute('data-section');
+    showSection(sec);
+  });
+});
+function showSection(id){
+  sectionDashboard.style.display = id === 'dashboard' ? 'block' : 'none';
+  sectionMembers.style.display = id === 'members' ? 'block' : 'none';
+  sectionPayments.style.display = id === 'payments' ? 'block' : 'none';
+}
+
+/* ========== Activity functions ========== */
+function addActivity(type, text){
+  if(!text) return;
+  const now = new Date();
+  const ts = now.toLocaleString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+  activities.unshift({type,text,ts});
+  activities = activities.filter(a=>a && a.text).slice(0,10);
+  saveJSON('activities', activities);
+  renderActivities(true);
+}
+function renderActivities(animateNew=false){
+  activityList.innerHTML = '';
+  if(!activities.length){
+    const d = document.createElement('div'); d.style.color='var(--muted)'; d.textContent='No recent activity yet.'; activityList.appendChild(d); return;
+  }
+  activities.forEach((a,i)=>{
+    const row = document.createElement('div'); row.className='activity-row';
+    const left = document.createElement('div'); left.className='activity-left';
+    const ic = document.createElement('div'); ic.className='activity-icon';
+    // choose icon & color
+    let icon='ℹ️', bg='var(--primary)';
+    if(a.type==='member-added'){ icon='👤'; bg='var(--primary)'; }
+    if(a.type==='member-edited'){ icon='✏️'; bg='#7c3aed'; }
+    if(a.type==='member-deleted'){ icon='🗑️'; bg='var(--danger)'; }
+    if(a.type==='payment-added'){ icon='💳'; bg='var(--success)'; }
+    if(a.type==='payment-edited'){ icon='✏️'; bg='#7c3aed'; }
+    if(a.type==='payment-deleted'){ icon='🗑️'; bg='var(--danger)'; }
+    ic.textContent = icon; ic.style.background = bg;
+    const txt = document.createElement('div'); txt.innerHTML = `<div style="font-weight:700">${a.text}</div><div style="font-size:12px;color:var(--muted)">${a.ts}</div>`;
+    left.appendChild(ic); left.appendChild(txt); row.appendChild(left);
+    activityList.appendChild(row);
+    setTimeout(()=> row.classList.add('show'), i*60);
+  });
+}
+
+/* ========== Members CRUD ========== */
+function renderMembers(filter=''){
+  memberTableBody.innerHTML = '';
+  const q = (filter||'').toLowerCase();
+  members.forEach((m,i)=>{
+    const all = `${m.name} ${m.email} ${m.phone} ${m.location}`.toLowerCase();
+    if(q && !all.includes(q)) return;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${escapeHTML(m.name)}</td><td>${escapeHTML(m.dob||'—')}</td><td>${escapeHTML(m.phone||'—')}</td><td>${escapeHTML(m.email||'—')}</td><td>${escapeHTML(m.location||'—')}</td>
+      <td>
+        <button class="btn" style="background:#10b981;margin-right:6px" data-i="${i}" data-action="edit">Edit</button>
+        <button class="btn" style="background:var(--danger)" data-i="${i}" data-action="delete">Delete</button>
+      </td>`;
+    memberTableBody.appendChild(tr);
+  });
+  totalMembersEl.textContent = members.length;
+  // bind buttons
+  $$('.btn[data-action="edit"]', memberTableBody).forEach(b=> b.addEventListener('click', ()=> editMember(Number(b.dataset.i))));
+  $$('.btn[data-action="delete"]', memberTableBody).forEach(b=> b.addEventListener('click', ()=> deleteMember(Number(b.dataset.i))));
+}
+addMemberBtn.addEventListener('click', ()=>{
+  memberEditIndex.value = ''; memberName.value=''; memberDOB.value=''; memberPhone.value=''; memberEmail.value=''; memberLocation.value=''; memberPayment.value='';
+  memberModal.classList.add('show'); memberModal.setAttribute('aria-hidden','false');
+});
+memberCancel.addEventListener('click', ()=> { memberModal.classList.remove('show'); memberModal.setAttribute('aria-hidden','true'); });
+memberSave.addEventListener('click', ()=>{
+  const idx = memberEditIndex.value;
+  const obj = { name: memberName.value.trim(), dob: memberDOB.value, phone: memberPhone.value.trim(), email: memberEmail.value.trim(), location: memberLocation.value.trim(), payment: (memberPayment.value||'').trim() || null };
+  if(!obj.name){ showToast('Name is required','error'); return; }
+  if(idx !== ''){ members[idx] = obj; saveJSON('members', members); showToast('Member updated','success'); addActivity('member-edited', `${obj.name} updated`); }
+  else { members.push(obj); saveJSON('members', members); showToast('Member added','success'); addActivity('member-added', `${obj.name} added`); }
+  renderMembers($('#memberSearch').value); memberModal.classList.remove('show'); memberModal.setAttribute('aria-hidden','true');
+});
+function editMember(i){ const m = members[i]; if(!m) return; memberEditIndex.value=i; memberName.value=m.name||''; memberDOB.value=m.dob||''; memberPhone.value=m.phone||''; memberEmail.value=m.email||''; memberLocation.value=m.location||''; memberPayment.value = m.payment||''; memberModal.classList.add('show'); memberModal.setAttribute('aria-hidden','false'); }
+function deleteMember(i){ const rem = members.splice(i,1)[0]; saveJSON('members', members); renderMembers($('#memberSearch').value); showToast('Member deleted','success'); addActivity('member-deleted', `${rem.name} removed`); }
+
+/* member search & export */
+memberSearch && memberSearch.addEventListener('input', e=> renderMembers(e.target.value));
+exportMembersBtn && exportMembersBtn.addEventListener('click', ()=> { if(!members.length) return showToast('No members to export','info'); exportCSV(members,'members.csv'); });
+
+/* ========== Payments CRUD ========== */
+function renderPayments(filter=''){
+  paymentTableBody.innerHTML = ''; let total=0;
+  const q = (filter||'').toLowerCase();
+  payments.forEach((p,i)=>{
+    const all = `${p.amount} ${p.currency} ${p.type} ${p.mode} ${p.ref||''}`.toLowerCase();
+    if(q && !all.includes(q)) return;
+    const desc = p.ref && p.ref.trim() && p.ref.trim().toLowerCase() !== 'undefined' ? p.ref : '—';
+    total += Number(p.amount) || 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${escapeHTML(p.amount)} ${escapeHTML(p.currency||'')}</td><td>${escapeHTML(p.type||'')}</td><td>${escapeHTML(p.mode||'')}</td><td>${escapeHTML(desc)}</td>
+      <td><button class="btn" style="background:#10b981;margin-right:6px" data-i="${i}" data-action="edit-pay">Edit</button>
+      <button class="btn" style="background:var(--danger)" data-i="${i}" data-action="delete-pay">Delete</button></td>`;
+    paymentTableBody.appendChild(tr);
+  });
+  totalPaymentsEl.textContent = payments.length;
+  totalRevenueEl.textContent = `GHS ${total.toFixed(2)}`;
+  $$('.btn[data-action="edit-pay"]', paymentTableBody).forEach(b=>b.addEventListener('click', ()=> editPayment(Number(b.dataset.i))));
+  $$('.btn[data-action="delete-pay"]', paymentTableBody).forEach(b=>b.addEventListener('click', ()=> deletePayment(Number(b.dataset.i))));
+}
+addPaymentBtn.addEventListener('click', ()=> {
+  paymentEditIndex.value=''; paymentAmount.value=''; paymentCurrency.value='GHS'; paymentType.value='Momo'; paymentMode.value='Cash'; paymentRef.value=''; paymentNote.value='';
+  paymentModal.classList.add('show'); paymentModal.setAttribute('aria-hidden','false');
+});
+paymentCancel.addEventListener('click', ()=> { paymentModal.classList.remove('show'); paymentModal.setAttribute('aria-hidden','true'); });
+paymentSave.addEventListener('click', ()=>{
+  const idx = paymentEditIndex.value;
+  const obj = { amount: (paymentAmount.value||'').trim(), currency: paymentCurrency.value, type: paymentType.value, mode: paymentMode.value, ref: (paymentRef.value||'').trim(), note: (paymentNote.value||'').trim() };
+  if(!obj.amount){ showToast('Amount is required','error'); return; }
+  if(idx !== ''){ payments[idx] = obj; saveJSON('payments', payments); showToast('Payment updated','success'); addActivity('payment-edited', `Payment updated ${obj.amount} ${obj.currency}`); }
+  else { payments.push(obj); saveJSON('payments', payments); showToast('Payment added','success'); addActivity('payment-added', `Payment ${obj.amount} ${obj.currency}`); }
+  renderPayments($('#paymentSearch').value); paymentModal.classList.remove('show'); paymentModal.setAttribute('aria-hidden','true');
+});
+function editPayment(i){ const p = payments[i]; if(!p) return; paymentEditIndex.value=i; paymentAmount.value=p.amount||''; paymentCurrency.value=p.currency||'GHS'; paymentType.value=p.type||'Momo'; paymentMode.value=p.mode||'Cash'; paymentRef.value=p.ref||''; paymentNote.value=p.note||''; paymentModal.classList.add('show'); paymentModal.setAttribute('aria-hidden','false'); }
+function deletePayment(i){ const rem = payments.splice(i,1)[0]; saveJSON('payments', payments); renderPayments($('#paymentSearch').value); showToast('Payment deleted','success'); addActivity('payment-deleted', `Deleted payment ${rem.amount} ${rem.currency}`); }
+
+/* payment search & export */
+paymentSearch && paymentSearch.addEventListener('input', e=> renderPayments(e.target.value));
+exportPaymentsBtn && exportPaymentsBtn.addEventListener('click', ()=> { if(!payments.length) return showToast('No payments to export','info'); exportCSV(payments,'payments.csv'); });
+
+/* ========== CSV export helper ========== */
+function exportCSV(arr, filename='export.csv'){
+  if(!arr || !arr.length) return showToast('No data to export','info');
+  const keys = Object.keys(arr[0]);
+  const rows = arr.map(r => keys.map(k => `"${String(r[k] ?? '').replace(/"/g,'""')}"`).join(','));
+  const csv = [keys.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type:'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
+}
+
+/* ========== Helpers ========== */
+function escapeHTML(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ========== Logout with toast-confirm ========== */
+logoutBtn.addEventListener('click', ()=>{
+  showToast('Are you sure you want to log out?', 'info', [
+    { label: 'Cancel', positive: false, onClick: ()=> {/* nothing */} },
+    { label: 'Log out', positive: true, onClick: ()=> {
+        // clear session and redirect
+        localStorage.removeItem('loggedInUser');
+        showToast('Logged out', 'success');
+        setTimeout(()=> location.href = 'login.html', 600);
+    } }
+  ]);
+});
+
+/* ========== Initial rendering and sync ========== */
+function renderAll(){
+  renderMembers();
+  renderPayments();
+  renderActivities();
+}
+members = Array.isArray(members) ? members : [];
+payments = Array.isArray(payments) ? payments : [];
+activities = Array.isArray(activities) ? activities.filter(a=>a && a.text) : [];
+
+renderAll();
+
+/* show welcome first name */
+(function setWelcome(){
+  try{
+    const u = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+    const fallback = (localStorage.getItem('firstName') || (u && u.name) || 'User');
+    $('#welcomeText').textContent = `Welcome ${String(fallback).split(' ')[0] || 'User'}`;
+  }catch(e){ $('#welcomeText').textContent = 'Welcome User'; }
+})();
+
+/* expose functions for debugging if needed */
+window.editMember = editMember; window.deleteMember = deleteMember; window.editPayment = editPayment; window.deletePayment = deletePayment; window.addActivity = addActivity;
+</script>
+</body>
+</html>

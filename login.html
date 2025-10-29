@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Log In | CC GLOBAL</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{--bg:#f9fafb;--card:#fff;--text:#0f172a;--primary:#2563eb}
+  :root.dark{--bg:#071026;--card:#071728;--text:#e6eef8;--primary:#3b82f6}
+  body{background:var(--bg);color:var(--text);transition:background .25s,color .25s;font-family:Inter,system-ui}
+  .toast{animation:slideIn .35s ease,fadeOut .45s ease 3.2s forwards}
+  @keyframes slideIn{from{transform:translateY(-16px);opacity:0}to{transform:none;opacity:1}}
+  @keyframes fadeOut{to{opacity:0}}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center">
+
+  <div class="w-full max-w-md p-8 rounded-2xl shadow-lg" style="background:var(--card)">
+    <h1 class="text-3xl font-bold text-center mb-2">Log In</h1>
+    <!-- subtitle removed per request -->
+    <form id="loginForm" class="space-y-4 mt-4">
+      <div>
+        <label class="text-sm text-gray-600">Email or Username</label>
+        <input id="loginInput" required class="w-full border rounded-lg p-3 mt-1" />
+      </div>
+      <div>
+        <label class="text-sm text-gray-600">Password</label>
+        <input id="password" type="password" required class="w-full border rounded-lg p-3 mt-1" />
+      </div>
+
+      <div class="flex items-center justify-between">
+        <div>
+          <button id="themeToggle" type="button" class="px-3 py-2 rounded-md text-sm" style="background:var(--primary);color:white">🌓</button>
+        </div>
+        <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold">Log In</button>
+      </div>
+    </form>
+
+    <p class="text-center text-sm text-gray-600 mt-6">
+      Don't have an account? <a href="signup.html" class="text-blue-600 font-semibold">Sign Up</a>
+    </p>
+  </div>
+
+  <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-3"></div>
+
+<script>
+const toastContainer = document.getElementById('toastContainer');
+function showToast(message, type='success', actions=null){
+  const el = document.createElement('div');
+  el.className = 'toast p-3 rounded-lg shadow-lg flex items-center gap-3';
+  el.style.background = (type==='error')? '#ef4444' : (type==='info')? '#2563eb' : '#16a34a';
+  el.style.color = '#fff';
+  el.innerHTML = `<div style="font-size:18px">${ type==='error' ? '❌' : type==='info' ? 'ℹ️' : '✅' }</div>
+                  <div style="min-width:160px">${message}</div>`;
+  if(actions && Array.isArray(actions)){
+    const btnWrap = document.createElement('div'); btnWrap.style.marginLeft='8px';
+    actions.forEach(a => {
+      const b = document.createElement('button'); b.textContent = a.label; b.style.marginLeft='6px';
+      b.style.background = a.positive ? '#0ea5a1' : '#ef4444'; b.style.color='#fff'; b.className='rounded-md px-3 py-1 font-semibold';
+      b.onclick = ()=>{ a.onClick(); el.remove(); };
+      btnWrap.appendChild(b);
+    });
+    el.appendChild(btnWrap);
+  }
+  toastContainer.appendChild(el);
+  if(!actions) setTimeout(()=> el.remove(), 3600);
+  return el;
+}
+
+/* theme toggle */
+const themeToggle = document.getElementById('themeToggle');
+(function initTheme(){ if(localStorage.getItem('theme')==='dark') document.documentElement.classList.add('dark'); })();
+themeToggle.addEventListener('click', ()=>{ const dark = document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', dark ? 'dark' : 'light'); });
+
+/* login logic */
+document.getElementById('loginForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const input = document.getElementById('loginInput').value.trim();
+  const password = document.getElementById('password').value;
+  const users = JSON.parse(localStorage.getItem('users') || '[]');
+  // find by email OR username
+  const user = users.find(u => (u.email === input.toLowerCase() || u.username === input) && u.password === password);
+  if(!user) return showToast('Invalid email/username or password', 'error');
+  // store logged in user and firstName
+  localStorage.setItem('loggedInUser', JSON.stringify(user));
+  localStorage.setItem('firstName', (user.name || user.username || '').split(' ')[0] || user.username);
+  showToast(`Welcome back, ${(user.name||user.username).split(' ')[0]}!`, 'success');
+  setTimeout(()=> location.href = 'homepage.html', 900);
+});
+</script>
+</body>
+</html>
